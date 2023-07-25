@@ -14,14 +14,14 @@ security = HTTPBasic()
 @auth_router.post("/register")
 async def register(username: str, password: str):
     async with in_transaction():
-        try:
-            user = User(username=username)
-            await user.set_password(password)
-            await user.save()
-            return {"message": "User registered successfully!"}
-        except Exception as e:
-            print(str(e))
-            raise HTTPException(status_code=400, detail="Failed to register user")
+        # try:
+        user = User(username=username)
+        await user.set_password(password)
+        await user.save()
+        return {"message": "User registered successfully!"}
+        # except Exception as e:
+        #     print(str(e))
+        #     raise HTTPException(status_code=400, detail="Failed to register user")
 
 
 # async def authenticate(credentials: HTTPBasicCredentials = Depends()):
