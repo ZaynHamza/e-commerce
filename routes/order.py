@@ -35,4 +35,24 @@ async def post_order(schema: PostOrder):
             "id": new_order.id}
 
 
+@order_router.get("/orders")
+async def get_orders(authenticated: dict = Depends(authenticate)):
+    if authenticated:
+        orders = await Order.all().order_by("-date")
+        return {
+            "success": True,
+            "orders": orders
+        }
+    else:
+        return {"success": False,
+                "error": "not authenticated"}
 
+
+@order_router.delete("/orders/{order_id}")
+async def delete_order(order_id: int, authenticated: dict = Depends(authenticate)):
+    if authenticated:
+        await Order.filter(id=order_id).delete()
+        return {"success": True}
+    else:
+        return {"success": False,
+                "error": "not authenticated"}

@@ -18,7 +18,8 @@ async def post_category(schema: PostCategory, authenticated: dict = Depends(auth
         return {"success": True,
                 "id": new.id}
     else:
-        return {"error": "not authenticated"}
+        return {"success": False,
+                "error": "not authenticated"}
 
 
 @category_router.patch("/categories/{category_id}")
@@ -27,7 +28,8 @@ async def patch_category(category_id: int, schema: PostCategory, authenticated: 
         await Category.filter(id=category_id).update(name=schema.name, updated_at=datetime.now())
         return {"success": True}
     else:
-        return {"error": "not authenticated"}
+        return {"success": False,
+                "error": "not authenticated"}
 
 
 @category_router.delete("/categories/{category_id}")
@@ -35,7 +37,8 @@ async def delete_category(category_id: int, authenticated: dict = Depends(authen
     if authenticated:
         await Category.filter(id=category_id).delete()
     else:
-        return {"error": "not authenticated"}
+        return {"success": False,
+                "error": "not authenticated"}
 
 
 @category_router.get("/categories")

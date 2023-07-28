@@ -20,7 +20,8 @@ async def post_product(schema: PostProduct, authenticated: dict = Depends(authen
                 "id": new.id
             }
     else:
-        return {"error": "not authenticated"}
+        return {"success": False,
+                "error": "not authenticated"}
 
 
 @product_router.patch("/products/{product_id}")
@@ -29,7 +30,8 @@ async def patch_product(product_id: int, schema: PostProduct, authenticated: dic
         await Product.filter(id=product_id).update(**schema.__dict__, updated_at=datetime.now())
         return {"success": True}
     else:
-        return {"error": "not authenticated"}
+        return {"success": False,
+                "error": "not authenticated"}
 
 
 @product_router.delete("/products/{product_id}")
@@ -38,7 +40,17 @@ async def delete_product(product_id: int, authenticated: dict = Depends(authenti
         await Product.filter(id=product_id).delete()
         return {"success": True}
     else:
-        return {"error": "not authenticated"}
+        return {"success": False,
+                "error": "not authenticated"}
+
+
+@product_router.get("/products/{product_id}")
+async def get_product(product_id: int):
+    product = await Product.filter(id=product_id).first()
+    return {
+        "success": True,
+        "product": product
+    }
 
 
 @product_router.get("/products")
