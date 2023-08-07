@@ -39,9 +39,15 @@ async def post_order(schema: PostOrder):
 async def get_orders(authenticated: dict = Depends(authenticate)):
     if authenticated:
         orders = await Order.all().order_by("-date")
+        orders_dicts = []
+        for order in orders:
+            order_dict = order.__dict__
+            items = await OrderItem.filter(order_id=order.id).all().values('product__id', 'product__name', 'quantity')
+            order_dict['items'] = items
+            orders_dicts.append(order_dict)
         return {
             "success": True,
-            "orders": orders
+            "orders": orders_dicts
         }
     else:
         return {"success": False,
