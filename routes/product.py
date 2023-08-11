@@ -5,33 +5,9 @@ from routes.auth import authenticate
 from tortoise.transactions import in_transaction
 from datetime import datetime
 import os
-import platform
-from uuid import uuid4
-import aiofiles
 
 
 product_router = APIRouter()
-
-
-# current_dir = os.getcwd()
-# db_file_path = os.path.join(current_dir, "db.sqlite3")
-#
-#
-# # function to save file
-# async def file_save(file):
-#     path_data = current_dir
-#     path_data = os.path.join(path_data, 'files')
-#     file_name = file.filename
-#     file_type = file_name.split('.')
-#     file_type = file_type[-1]
-#     name = '{}.{}'.format(str(uuid4().hex), file_type)
-#     my_path = os.path.join(path_data, name)
-#     async with aiofiles.open(my_path, 'wb') as out_file:
-#         content = await file.read()  # async read
-#         await out_file.write(content)  # async write
-#     return {
-#         "image_path": '/files/{}'.format(name)
-#     }
 
 
 @product_router.post("/products")
@@ -47,25 +23,6 @@ async def post_product(schema: PostProduct, authenticated: dict = Depends(authen
     else:
         return {"success": False,
                 "error": "not authenticated"}
-
-
-# @product_router.post("/products")
-# async def post_product(schema: PostProduct, authenticated: dict = Depends(authenticate), file: UploadFile = File(None)):
-#     if authenticated:
-#         async with in_transaction() as conn:
-#             new = Product(**schema.__dict__)
-#             await new.save(using_db=conn)
-#
-#             # if file is not None:
-#
-#
-#             return {
-#                 "success": True,
-#                 "id": new.id
-#             }
-#     else:
-#         return {"success": False,
-#                 "error": "not authenticated"}
 
 
 @product_router.patch("/products/{product_id}")
@@ -95,6 +52,37 @@ async def get_product(product_id: int):
         "success": True,
         "product": product
     }
+
+
+@product_router.patch("/products/{product_id}/image")
+async def patch_product_image(product_id: int, image: UploadFile = File(None), authenticated: dict = Depends(authenticate)):
+    if authenticated:
+        product = await Product.get_or_none(id=product_id)
+        if not product:
+            return {"success": True,
+                    "error": "product not found"}
+
+        if not os.path.exists("uploads"):
+            os.makedirs("uploads")
+
+        async with in_transaction() as conn:
+            if product.image is not None and product.image != "":
+                if product.image:
+                    if isinstance(product.image, str):
+                        os.remove(product.image)
+                product.image = None
+                await product.save(using_db=conn)
+
+            if image:
+                file_path = f"uploads/{image.filename}"
+                with open(file_path, "wb") as f:
+                    f.write(image.file.read())
+                product.image = file_path
+                await product.save(using_db=conn)
+            return {"success": True, "message": "Image updated successfully"}
+
+    else:
+        return {"success": False, "error": "Not authenticated"}
 
 
 @product_router.get("/products")

@@ -2,6 +2,7 @@ import os
 from tortoise.contrib.fastapi import register_tortoise
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from routes.auth import auth_router
 from routes.product import product_router
 from routes.category import category_router
@@ -40,6 +41,8 @@ def create_app() -> FastAPI:
     register_views(app=app)
     # connect socketio to app
     # app.mount("/", socket_router)
+    # Serve static files from the "uploads" directory
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
     return app
 
 
