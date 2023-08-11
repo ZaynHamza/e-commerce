@@ -10,5 +10,5 @@ class PostProduct(BaseModel):
     name: str
     description: Optional[str]
     price: int
-    category_id: int
+    category_id: Optional[int]
 
