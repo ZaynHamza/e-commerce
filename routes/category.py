@@ -36,6 +36,9 @@ async def patch_category(category_id: int, schema: PostCategory, authenticated: 
 async def delete_category(category_id: int, authenticated: dict = Depends(authenticate)):
     if authenticated:
         await Category.filter(id=category_id).delete()
+        return {
+            "success": True
+        }
     else:
         return {"success": False,
                 "error": "not authenticated"}

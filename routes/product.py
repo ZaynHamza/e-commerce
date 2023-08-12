@@ -4,6 +4,7 @@ from schemas.product import PostProduct
 from routes.auth import authenticate
 from tortoise.transactions import in_transaction
 from datetime import datetime
+from PIL import Image
 import os
 
 
@@ -54,6 +55,13 @@ async def get_product(product_id: int):
     }
 
 
+ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png"}
+
+
+def is_valid_image(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+
+
 @product_router.patch("/products/{product_id}/image")
 async def patch_product_image(product_id: int, image: UploadFile = File(None), authenticated: dict = Depends(authenticate)):
     if authenticated:
@@ -66,6 +74,9 @@ async def patch_product_image(product_id: int, image: UploadFile = File(None), a
             os.makedirs("uploads")
 
         async with in_transaction() as conn:
+            if not is_valid_image(image.filename):
+                return {"success": False, "error": "File is not a valid image"}
+
             if product.image is not None and product.image != "":
                 if product.image:
                     if isinstance(product.image, str):
@@ -73,12 +84,18 @@ async def patch_product_image(product_id: int, image: UploadFile = File(None), a
                 product.image = None
                 await product.save(using_db=conn)
 
-            if image:
+            if image and is_valid_image(image.filename):
                 file_path = f"uploads/{image.filename}"
                 with open(file_path, "wb") as f:
                     f.write(image.file.read())
+
+                pil_image = Image.open(file_path)
+                pil_image.thumbnail((960, 960))
+                pil_image.save(file_path)
+
                 product.image = file_path
                 await product.save(using_db=conn)
+
             return {"success": True, "message": "Image updated successfully"}
 
     else:
